@@ -1,0 +1,111 @@
+substitutions:
+  device_name: esp8266pelao
+  device_platform: esp8266
+  device_board: nodemcuv2
+
+<<: !include common/base.yaml
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+status_led:
+  pin:
+    number: GPIO12
+
+switch:
+  - platform: gpio
+    pin: GPIO12
+    id: red_pin
+
+sensor:
+  - platform: dht
+    pin: GPIO5
+    model: AM2302
+    temperature:
+      name: "temperatura_test"
+      id: tempdht22
+      accuracy_decimals: 2
+      filters:
+        - multiply: 0.92
+    humidity:
+      name: "Humedad_test"
+      id: humdht22
+    update_interval: 4s
+  - platform: adc
+    pin: VCC
+    id: "VCC"
+    internal: true
+  - platform: template
+    name: "esp.2.battery_level"
+    unit_of_measurement: "%"
+    update_interval: 4s
+    lambda: |-
+      return ((id(VCC).state /3.30) * 100.00);
+
+# Example configuration entry
+deep_sleep:
+  run_duration: 5s
+  sleep_duration: 60s
+  id: deep_sleep_1
+
+mqtt:
+  broker: !secret mqtt_broker
+  # id: mqtt_client
+  #   discovery_prefix: !secret mqtt_prefijo
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password
+  on_message:
+    - topic: $device_name/ota_mode
+      payload: 'ON'
+      then:
+        - deep_sleep.prevent: deep_sleep_1
+    - topic: $device_name/sleep_mode
+      payload: 'ON'
+      then:
+        - deep_sleep.enter: deep_sleep_1 
+
+# interval:
+#   - interval: 10s
+  on_connect:
+    then:
+      - mqtt.publish:
+          topic: esp8266pelao/test/state
+          payload: "test"
+      - mqtt.publish:
+          topic: esp8266pelao/time/state
+          payload: !lambda |-
+            char str[25];
+            time_t currTime = id(sntp_time).now().timestamp;
+            strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", localtime(&currTime));
+            // strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", gmtime(&currTime));
+            return (std::string) str; 
+      - mqtt.publish:
+          topic: esp8266pelao/sensor/temperatura_test/state
+          payload: !lambda |-
+            // return esphome::to_string(id(tempdht22).state);
+            char buf[128];
+            sprintf(buf, "%.1f", id(tempdht22).state);
+            return buf;
+      - mqtt.publish:
+          topic: esp8266pelao/sensor/esp2battery_level/state
+          payload: !lambda |-
+            return esphome::to_string((id(VCC).state /3.30) * 100.00);
+      - mqtt.publish: 
+          topic: esp8266pelao/sensor/humedad_test/state
+          payload: !lambda |-
+            char bof[128];
+            sprintf(bof, "%.f", id(humdht22).state);
+            return bof;
+            // return esphome::to_string(id(humdht22).state);
+
+            
+
+  # on_message:
+  #   topic: esp8266pelao/sensor/temperatura_test/state
+  #   qos: 1
+  #   then:
+  #     - switch.turn_on: red_pin
+  #     - delay: 300ms
+  #     - switch.turn_off: red_pin
+  #     - delay: 300ms

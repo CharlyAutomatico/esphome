@@ -1,0 +1,33 @@
+esphome:
+  name: $device_name
+  platform: $device_platform
+  board: $device_board
+  build_path: ./build/$device_name
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  # manual_ip:
+  #   static_ip: $device_ip
+  #   gateway: $device_gw
+  #   subnet: $device_mask
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: $device_name
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+logger:
+  level: VERBOSE
+  logs:
+    mqtt.component: VERBOSE
+    mqtt.client: VERBOSE
+
+ota:
+  password: !secret ota_password
+# binary_sensor:
+#   - platform: status
+#     name: "$device_name status"

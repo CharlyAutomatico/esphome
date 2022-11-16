@@ -1,0 +1,39 @@
+substitutions:
+  device_name: esphomedht22mqtt
+  device_platform: esp8266
+  device_board: d1_mini
+
+<<: !include common/base.yaml
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+sensor:
+  - platform: dht
+    pin: D5
+    model: AM2302
+    temperature:
+      name: "temperatura_test"
+      filters:
+        - multiply: 0.92
+    humidity:
+      name: "Humedad_test"
+      id: tempdht22
+    update_interval: 60s
+
+#mqtt:
+  #discovery_prefix: esphome_test
+  #broker: !secret mqtt_broker
+  #broker: 192.168.1.185
+  #id: mqtt_client
+# Example configuration entry
+
+
+text_sensor:
+  - platform: template
+    id: systime
+    lambda: char str[20];
+      time_t currTime = id(sntp_time).now().timestamp;
+      strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", localtime(&currTime));
+      return (std::string) str;
