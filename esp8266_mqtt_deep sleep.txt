@@ -1,0 +1,270 @@
+#####esp8266 + mqtt + deep sleep
+##Charlysan — 17/10/2022 11:19
+This is my code
+ubstitutions:
+  device_name: esp8266pelao
+  device_platform: esp8266
+  device_board: nodemcuv2
+
+<<: !include common/base.yaml
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+status_led:
+  pin:
+    number: GPIO12
+
+switch:
+  - platform: gpio
+    pin: GPIO12
+    id: red_pin
+
+sensor:
+  - platform: dht
+    pin: GPIO5
+    model: AM2302
+    temperature:
+      name: "temperatura_test"
+      id: tempdht22
+      accuracy_decimals: 2
+      filters:
+        - multiply: 0.92
+    humidity:
+      name: "Humedad_test"
+      id: humdht22
+      on_value:
+        - mqtt.publish:
+            topic: esp8266pelao/time/state
+            payload: !lambda |-
+              char str[25];
+              time_t currTime = id(sntp_time).now().timestamp;
+              strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", localtime(&currTime));
+              // strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", gmtime(&currTime));
+              return (std::string) str;
+    update_interval: 9s
+  - platform: adc
+    pin: VCC
+    id: "VCC"
+    internal: true
+  - platform: template
+    name: "esp.2.battery_level"
+    unit_of_measurement: "%"
+    update_interval: 9s
+    lambda: |-
+      return ((id(VCC).state /3.30) * 100.00);
+
+# Example configuration entry
+deep_sleep:
+  run_duration: 10s
+  sleep_duration: 60s
+  id: deep_sleep_1
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password
+  on_message:
+    - topic: $device_name/ota_mode
+      payload: "ON"
+      then:
+        - deep_sleep.prevent: deep_sleep_1
+    - topic: $device_name/sleep_mode
+      payload: "ON"
+      then:
+        - deep_sleep.enter: deep_sleep_1
+very basic, an esp8266 with a DHT connected
+and a broker to send this DHT data
+also hay send the % of my batery
+I want that the ESP be ON the less time posible
+#de-es — 17/10/2022 11:24
+Uh that battery level indicator won't work at all lol. ESP cannot physically function on 1V and yet your function will report 30.3% battery at 1V ADC value. 
+But I digress
+#Charlysan — 17/10/2022 11:25
+humm its works
+[11:24:31][V][sensor:076]: 'esp.2.battery_level': Received new state 101.029831
+[11:24:31][D][sensor:126]: 'esp.2.battery_level': Sending state 101.02983 % with 1 decimals of accuracy
+[11:24:31][V][mqtt:414]: Publish(topic='esp8266pelao/sensor/esp2battery_level/state' payload='101.0' retain=1)
+#de-es — 17/10/2022 11:25
+it returns a value sure
+is it a useful value though if it can go over 100% and will as soon as it reaches 75%? Your call 🙂
+#Charlysan — 17/10/2022 11:27
+well the 100% is 3.3v, and my batery have 3.4v
+#de-es — 17/10/2022 11:28
+anyway right so in your code you're updating the DHT every 9s, and also sending an extra mqtt message with time any time it updates, plus you have a reasonable mqtt command to disable deep sleep for OTA purposes
+#de-es — 17/10/2022 11:28
+my point was that the esp will die if voltage goes below 2.5V and your lambda will still be returning 75% battery then 
+(2.5/3.3) * 100 => 75.75
+#Charlysan — 17/10/2022 11:29
+OK, I understood it now, you were right
+#de-es — 17/10/2022 11:30
+back to the topic at hand I don't think you need to use  update_interval: 9s at all. I'm pretty sure esp will automatically publish the initial sensor state as soon as it comes online
+What is the issue you're trying to solve? Are sensors not reporting? Are they reporting twice? Do you want them to report to a different mqtt topic? You still haven't stated what your issue is exactly, or maybe I'm just not understanding
+update_interval defaults to 60s so that would generally not matter whatsoever unless you want to send more than a single update
+if you want (for some reason) to send all sensors only once right after connecting, then you can set all to never and then use https://esphome.io/components/mqtt.html#on-connect-on-disconnect-trigger trigger to manually execute component.update() for every component in whatever order you'd like
+#Charlysan — 17/10/2022 11:40
+Amazon knocking at the door
+sorry
+#Charlysan — 17/10/2022 12:02
+I am using batery, so I have to spent the less time with the ESP up.
+With: update_interval: 9s and run_duration: 10s Its works pretty good.
+Some time there are repeated data and other I loose the esp_batery data.
+I am loosing around 3 or 4 seconds each 5 minutes with this setup.
+
+Your last words give me a light to explore.
+Last question: can you write o send a link with an example of how manually execute component.update()?
+#de-es — 17/10/2022 12:10
+it's in automation docs
+https://esphome.io/guides/automations.html#component-update-action
+#Charlysan — 17/10/2022 18:45
+Sorry, but... whats the name component of this sensor
+sensor:
+  - platform: dht
+    pin: GPIO5
+    model: AM2302
+    temperature:
+      name: "temperatura_test"
+      id: "tempdht22"
+      accuracy_decimals: 2
+      filters:
+        - multiply: 0.92
+    humidity:
+      name: "Humedad_test"
+      id: "humdht22"
+All the attempts with name, id, plataform I try give me an error
+#de-es — 17/10/2022 18:55
+What error
+#Charlysan — 17/10/2022 19:55
+this error
+Whats the name of component?, I thought it was "sensor"
+Imagen
+I´ve tried with "name", "id", "dht"...
+#ssieb — 17/10/2022 20:53
+You have to give the top-level sensor an id:
+#Charlysan — 17/10/2022 23:47
+OK, I have added an ID at the top level and… yes, the code compile without errores. Thanks
+
+The next stone on the way is that I don´t now why my on_connect entry doesn´t works. Some so easy like this:
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password
+  on_connect:
+    then:
+      - logger.log: "Hello World"
+      - mqtt.publish:
+          topic: esp8266pelao/test/state
+          payload: “test"
+
+No errors or something I can take by reference. 
+What are I forgotten?
+
+If you can´t continue with this thread, don´t worry. I really appreciate your effort here
+#ssieb — 17/10/2022 23:47
+What isn't working?  You don't see the log message or the mqtt message?
+#Charlysan — 17/10/2022 23:47
+It is working with an Interval Component
+like this:
+interval:
+  - interval: 8s
+    then:
+      - logger.log: "Hello World"
+      - component.update: "meteor"
+      # - lambda: 'id(meteor).update();'
+      - mqtt.publish:
+          topic: esp8266pelao/test/state
+          payload: "test"
+#ssieb — 17/10/2022 23:49
+You didn't answer the question...
+#Charlysan — 17/10/2022 23:50
+one minute
+Yes, no messages, no logs,
+wierd
+weird
+#ssieb — 17/10/2022 23:55
+Depending on how you're viewing the logs, you might now be able to see it.
+Try adding - delay: 1ms before the logger line.
+That should at least make the mqtt send work.
+#Charlysan — 17/10/2022 23:58
+OK another minute
+I can believe it
+it´s working
+#Charlysan — 18/10/2022 0:04
+Well @#ssieb , For me this have been a master class, and make me really happy
+
+Thank you very much
+please don´t change 
+#Charlysan — 23/10/2022 22:24
+OK
+#ssieb — 23/10/2022 22:26
+Do you have a question?
+#Charlysan — 23/10/2022 22:38
+Yes,  the problem es how to update my esphome devices which are 15 minutes in deep sleep and 5 seconds on. You answered was:
+You need some kind of flag, mqtt or HA, that tells the ESP not to go back to deep sleep.  Then the next time it wakes up, I can do the update of Then the next time it wakes up, You can do the code update.
+And ask me if y work with mqtt o HA, I answered : MQTT
+I guess you are thinking of subscribing it to some topic. And that message automates some task that overrides the deep sleep mode. 
+#ssieb — 23/10/2022 22:46
+yes
+You add a topic listener and if the value is set to a specific value, you disable the deep sleep.
+#Charlysan — 23/10/2022 22:50
+seems easy but a don´t know how, In the Deep Sleep Component I didn´t see any clue to do it
+this is me code:
+# Deep Sleep configuration entry
+deep_sleep:
+  run_duration: $device_run_duration
+  sleep_duration: $device_sleep_duration
+  id: $device_deep_sleep
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password
+  on_message:
+    - topic: $device_name/ota_mode
+      payload: "ON"
+      then:
+        - deep_sleep.prevent: $device_deep_sleep
+    - topic: $device_name/sleep_mode
+      payload: "ON"
+      then:
+        - deep_sleep.enter: $device_deep_sleep
+I have some listener to prevent go to deep sleep when I am updating code
+#ssieb — 23/10/2022 22:54
+You already have something?
+#Charlysan — 23/10/2022 22:55
+Yes
+I have to catch it the moment the esp8266 is turned on.
+#ssieb — 23/10/2022 22:58
+If you use persistent messages, it will automatically get it as soon as mqtt connects.
+#Charlysan — 23/10/2022 23:02
+Humm I use to use VSCODE esphome extension to update code to my devices, and this works under the hood for me.
+I'm not sure I understand you
+Do you mean that if I publish a mqqt message with the topic /mydevice/ota_mode payload="ON" 
+when it reboot, the esp8266 it's going to stay waiting for an update?
+#ssieb — 23/10/2022 23:10
+yes
+#Charlysan — 23/10/2022 23:13
+When you talk about "persistent messages" . What you mean? publish with retain flag?
+#ssieb — 23/10/2022 23:13
+That's the term I couldn't remember. 🙂
+#Charlysan — 23/10/2022 23:14
+hahahahah
+#Charlysan — 23/10/2022 23:44
+I thought it was a joke, wasn´t it
+#ssieb — 23/10/2022 23:46
+No.  I meant "retain", I just couldn't remember that term when I mentioned it before.
+#Charlysan — 23/10/2022 23:50
+OK, I have tested and yes its works, also I sent a topic /mydevice/sleep_mode payload= "ON" and it goes Immediately tp deep sleep
+I
+if I want them to return to their normal working status
+What I have to do? public a topic /mydevice/ota_mode payload="OFF"  ?
+#ssieb — 24/10/2022 0:00
+You will need to change that topic to something else, but you have to be careful that you only handle it if you've previously disabled sleep.  Otherwise, it will immediately sleep on a normal boot.
+Maybe set a global variable if you've disabled sleep. Then check that in the OFF handler.
+#Charlysan — 24/10/2022 0:21
+Yes, I have just seen it. I have to test it more and maybe explore that you said about global variables. But first I have to learn something about it, yo know, to make good questions. 
+Thank you very much @#ssieb
