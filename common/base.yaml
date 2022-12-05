@@ -23,7 +23,7 @@ captive_portal:
 logger:
   level: VERBOSE
   logs:
-    mqtt.component: VERBOSE
+    mqtt.component: DEBUG
     mqtt.client: VERBOSE
 
 ota:
