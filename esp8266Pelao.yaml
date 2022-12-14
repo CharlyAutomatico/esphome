@@ -22,7 +22,7 @@ switch:
   - platform: gpio
     pin: GPIO12
     id: red_pin
-    
+
 # RESTART ESP
 button:
   - platform: restart
