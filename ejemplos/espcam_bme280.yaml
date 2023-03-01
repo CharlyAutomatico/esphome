@@ -1,0 +1,36 @@
+substitutions:
+  device_name: espcambme280
+  device_platform: esp32
+  device_board: esp32cam
+
+<<: !include common/base.yaml
+
+logger:
+  level: VERBOSE
+  logs:
+    mqtt.component: DEBUG
+    mqtt.client: VERBOSE
+
+i2c: 
+  sda: GPIO14
+  scl: GPIO15
+  scan: True
+  id: bus_a
+
+sensor:
+  - platform: bmp280
+    temperature:
+      name: "BME280 Temperature"
+      oversampling: 16x
+    pressure:
+      name: "BME280 Pressure"
+    # humidity:
+    #   name: "BME280 Humidity"
+    address: 0x76
+    update_interval: 60s
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password

@@ -1,0 +1,60 @@
+substitutions:
+  device_name: tendedero
+  device_platform: esp32
+  device_board: nodemcu-32s
+
+<<: !include common/base.yaml
+
+# LED BLINK
+switch:
+  - platform: gpio
+    pin: GPIO19
+    name: "LED"
+    id: led
+
+# RESTART ESP
+button:
+  - platform: restart
+    name: "Restart button"
+    id: restart_button
+
+sensor:
+  - platform: ultrasonic
+    trigger_pin: GPIO21
+    echo_pin: GPIO23
+    name: "Distancia canalon"
+    id: "canalon"
+    unit_of_measurement: cm
+    accuracy_decimals: 1
+    update_interval: never
+    filters:
+      - lambda: return (x * 100);
+    on_value_range:
+      - below: 18
+        then:
+          - switch.turn_on: led
+      - above: 18.1
+        then:
+          - switch.turn_off: led
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password
+  on_message:
+    - topic: $device_name/button/restart_button/command
+      payload: "RESTART"
+      then:
+        - button.press: restart_button
+interval:
+  - interval: 60s
+    then:
+      - component.update: "canalon"
+      - mqtt.publish:
+          topic: $device_name/time/state
+          payload: !lambda |-
+            char str[25];
+            time_t currTime = id(sntp_time).now().timestamp;
+            strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", localtime(&currTime));
+            return (std::string) str;

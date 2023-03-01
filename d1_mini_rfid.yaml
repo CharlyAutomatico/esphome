@@ -1,0 +1,37 @@
+substitutions:
+  device_name: loti-comedero
+  device_platform: esp8266
+  device_board: d1_mini
+
+<<: !include common/base.yaml
+
+# RESTART ESP
+button:
+  - platform: restart
+    name: "Restart button"
+    id: restart_button
+
+i2c:
+  sda: D2
+  scl: D1
+  scan: False
+  frequency: 400kHz
+pn532_i2c:
+  update_interval: 1s
+
+
+binary_sensor:
+  - platform: pn532
+    uid: F3-29-59-A1
+    name: "PN532 NFC Tag"
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password
+  on_message:
+    - topic: $device_name/button/restart
+      payload: "RESTART"
+      then:
+        - button.press: restart_button

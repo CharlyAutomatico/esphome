@@ -1,0 +1,121 @@
+substitutions:
+  device_name: esp32cam01
+  device_platform: esp32
+  device_board: esp32cam
+  # device_ip: 192.168.1.178
+  # device_gw: 192.168.1.1
+  # device_mask: 255.255.255.0
+
+<<: !include common/base.yaml
+
+# esp32_camera:
+#   name: micamara01
+#   external_clock:
+#     pin: GPIO0
+#     frequency: 20MHz
+#   i2c_pins:
+#     sda: GPIO26
+#     scl: GPIO27
+#   data_pins: [GPIO5, GPIO18, GPIO19, GPIO21, GPIO36, GPIO39, GPIO34, GPIO35]
+#   vsync_pin: GPIO25
+#   href_pin: GPIO23
+#   pixel_clock_pin: GPIO22
+#   power_down_pin: GPIO32
+#   max_framerate: 12fps
+#   resolution: 640x480
+#   jpeg_quality: 10
+#   vertical_flip: false
+#   horizontal_mirror: true
+#   special_effect: none
+
+# # Servidor de vídeo
+# esp32_camera_web_server:
+#   - port: 80
+#     mode: stream
+#   - port: 8088
+#     mode: snapshot
+
+# # Example configuration entry
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 512ms
+    window: 48ms
+
+# text_sensor:
+#   - platform: ble_scanner
+#     name: "scan"
+
+# ble_client:
+#   # Replace with the MAC address of your device.
+#   - mac_address: FF:FF:10:7B:9A:39
+#     id: itag_azul
+#     on_connect:
+#       then:
+#         - lambda: |-
+#             ESP_LOGD("ble_client_lambda", "Connected to BLE device");
+#     on_disconnect:
+#       then:
+#         - lambda: |-
+#             ESP_LOGD("ble_client_lambda", "Disconnected from BLE device");
+
+binary_sensor:
+  - platform: ble_presence
+    mac_address: FF:FF:10:7B:9A:39
+    name: "ESP32 BLE Presence Charly"
+  - platform: ble_presence
+    mac_address: FF:FF:10:7B:BB:F8
+    name: "ESP32 BLE Presence Lucas"
+# binary_sensor:
+#   - platform: template
+#     id: charly_button
+#     name: "charly iTag Button"
+#     filters:
+#       delayed_off: 500ms
+sensor:
+  # RSSI based on MAC address
+  - platform: ble_rssi
+    mac_address: FF:FF:10:7B:9A:39
+    name: "BLE Mi Charly"
+  - platform: ble_rssi
+    mac_address: FF:FF:10:7B:BB:F8
+    name: "BLE Mi Lucas"
+
+# sensor:
+#   # This entry registers and awaits notifications for the
+#   # characteristic that signals button presses. Each time
+#   # a notification is received, the corresponding binary_sensor
+#   # is briefly toggled.
+#   - platform: ble_client
+#     type: characteristic
+#     ble_client_id: itag_azul
+#     name: "charly iTag btn"
+#     service_uuid: "ffe0"
+#     characteristic_uuid: "ffe1"
+#     notify: true
+#     update_interval: never
+#     on_notify:
+#       then:
+#         - binary_sensor.template.publish:
+#             id: charly_button
+#             state: ON
+#         - binary_sensor.template.publish:
+#             id: charly_button
+#             state: OFF
+#   # This entry queries the battery level.
+#   - platform: ble_client
+#     type: characteristic
+#     ble_client_id: itag_azul
+#     name: "charly iTag Battery"
+#     service_uuid: "180f"
+#     characteristic_uuid: "2a19"
+#     icon: "mdi:battery"
+#     unit_of_measurement: "%"
+#   # This entry queries polls the RSSI when the tag is connected.
+#   - platform: ble_client
+#     type: rssi
+#     ble_client_id: itag_azul
+#     name: "charly iTag RSSI"
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo

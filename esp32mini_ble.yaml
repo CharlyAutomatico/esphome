@@ -1,0 +1,11 @@
+substitutions:
+  device_name: minidiesp32
+  device_platform: esp32
+  device_board: nodemcu-32s
+
+
+  
+<<: !include common/base.yaml
+
+# Example configuration entry esp-wrover-kit
+esp32_ble_tracker:

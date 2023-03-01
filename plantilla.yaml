@@ -3,4 +3,7 @@ substitutions:
   device_platform: esp8266
   device_board: d1_mini
 
+
+  
 <<: !include common/base.yaml
+

@@ -1,0 +1,25 @@
+substitutions:
+  device_name: rdm6300
+  device_platform: esp8266
+  device_board: d1_mini
+
+
+  
+<<: !include common/base.yaml
+
+# Example configuration entry
+uart:
+  rx_pin: D8
+  baud_rate: 9600
+
+
+rdm6300:
+
+binary_sensor:
+  - platform: rdm6300
+    uid: 3756682
+    name: "RDM6300 NFC Tag"
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
