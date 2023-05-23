@@ -1,0 +1,49 @@
+substitutions:
+  device_name: esp32-loti-rfid
+  device_platform: esp32
+  device_board: esp32doit-devkit-v1
+
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/ssieb/custom_components
+#     components: [ rfid ]
+
+<<: !include common/base.yaml
+
+# uart:
+#   tx_pin: 18
+#   rx_pin: 19
+#   baud_rate: 9600
+
+# text_sensor:
+#   - platform: rfid
+#     name: myrfid
+#     id: myuart
+#     on_value:
+#       then:
+#         - lambda: |-
+#             ESP_LOGD("main", "The TAG is %s", x.c_str());
+
+# - mqtt.publish_json:
+#             topic: esp32-loti-rfid/sensor/myrfid
+#             payload: |-
+#               root["tag"] = id(myuart).state;
+#             # payload: !lambda |-
+#             #    return id(myuart).state  
+
+
+sensor:
+  - platform: ultrasonic
+    trigger_pin: GPIO21
+    echo_pin: GPIO23
+    name: "Distancia gato"
+#MQTT
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  discovery: false
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  
+

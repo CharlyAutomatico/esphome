@@ -7,3 +7,23 @@ substitutions:
   
 <<: !include common/base.yaml
 
+# RESTART ESP
+button:
+  - platform: restart
+    name: "Restart button"
+    id: restart_button
+
+
+
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  on_message:
+    - topic: $device_name/button/restart
+      payload: "RESTART"
+      then:
+        - button.press: restart_button
+

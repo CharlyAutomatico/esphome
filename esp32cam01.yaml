@@ -119,3 +119,5 @@ sensor:
 mqtt:
   broker: !secret mqtt_broker
   discovery_prefix: !secret mqtt_prefijo
+  username: !secret mqtt_username
+  password: !secret mqtt_password

@@ -1,17 +1,19 @@
+# substitutions:
+#   device_name: rdm6300
+#   device_platform: esp8266
+#   device_board: d1_mini
+
 substitutions:
-  device_name: rdm6300
-  device_platform: esp8266
-  device_board: d1_mini
+  device_name: rdm6300-seeeds
+  device_platform: esp32
+  device_board: esp32doit-devkit-v1
 
-
-  
 <<: !include common/base.yaml
 
 # Example configuration entry
 uart:
-  rx_pin: D8
+  rx_pin: 19
   baud_rate: 9600
-
 
 rdm6300:
 
@@ -23,3 +25,5 @@ binary_sensor:
 mqtt:
   broker: !secret mqtt_broker
   discovery_prefix: !secret mqtt_prefijo
+  username: !secret mqtt_username
+  password: !secret mqtt_password

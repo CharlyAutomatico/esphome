@@ -1,5 +1,5 @@
 substitutions:
-  device_name: esp8266tmp-patio
+  device_name: esp8266tmp-pelao
   device_platform: esp8266
   device_board: nodemcuv2
   device_run_duration: 6s
@@ -58,8 +58,8 @@ deep_sleep:
 mqtt:
   broker: !secret mqtt_broker
   discovery_prefix: !secret mqtt_prefijo
-  username: !secret mqtt_username
-  password: !secret mqtt_password
+  #   username: !secret mqtt_username
+  #   password: !secret mqtt_password
   on_message:
     - topic: $device_name/ota_mode
       payload: "ON"
@@ -87,7 +87,6 @@ mqtt:
             time_t currTime = id(sntp_time).now().timestamp;
             strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", localtime(&currTime));
             return (std::string) str;
-      - delay: 1s
       - mqtt.publish:
           topic: $device_name/sensor/esp2battery_level/state
           payload: !lambda |-
@@ -111,4 +110,3 @@ mqtt:
       - logger.log:
           format: "voltaje = %f V"
           args: ["ceil(id(VCC).state * 100.0) / 100.0"]
-      

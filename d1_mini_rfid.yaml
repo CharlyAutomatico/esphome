@@ -19,7 +19,6 @@ i2c:
 pn532_i2c:
   update_interval: 1s
 
-
 binary_sensor:
   - platform: pn532
     uid: F3-29-59-A1
@@ -28,8 +27,8 @@ binary_sensor:
 mqtt:
   broker: !secret mqtt_broker
   discovery_prefix: !secret mqtt_prefijo
-  #   username: !secret mqtt_username
-  #   password: !secret mqtt_password
+  username: !secret mqtt_username
+  password: !secret mqtt_password
   on_message:
     - topic: $device_name/button/restart
       payload: "RESTART"

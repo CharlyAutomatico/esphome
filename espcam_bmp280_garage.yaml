@@ -98,8 +98,8 @@ binary_sensor:
 mqtt:
   broker: !secret mqtt_broker
   discovery_prefix: !secret mqtt_prefijo
-  #   username: !secret mqtt_username
-  #   password: !secret mqtt_password
+  username: !secret mqtt_username
+  password: !secret mqtt_password
   on_message:
     - topic: $device_name/button/restart
       payload: "RESTART"

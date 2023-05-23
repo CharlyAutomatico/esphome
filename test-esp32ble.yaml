@@ -1,6 +1,6 @@
 substitutions:
   device_name: dev-c3u-2
-  # device_platform: esp8266
+  device_platform: espressif32
   device_board: lolin_c3_mini
 
 esphome:
@@ -8,19 +8,20 @@ esphome:
   # build_path: ./build/$device_name
   comment: test con esp32 y ble
   platformio_options:
-    board_build.f_flash: 40000000L
-    board_build.flash_mode: dio
-    board_build.flash_size: 4MB
+    board_build.mcu: esp32c3
+    # board_build.variant: esp32c3
+    # board_build.f_flash: 40000000L
+    # board_build.flash_mode: dio
+    # board_build.flash_size: 4MB
+    board_build.f_cpu: 160000000L
 esp32:
   board: ${device_board}
   variant: esp32c3
   framework:
     # type: esp-idf
     type: arduino
-    version: 2.0.5
-    platform_version: 5.2.0
-# logger:
-#   hardware_uart: USB_SERIAL_JTAG
+    # version: 2.0.5
+    # platform_version: 5.2.0
 
 <<: !include common/base.yaml
 
@@ -32,9 +33,9 @@ button:
 
 # # Example configuration entry
 esp32_ble_tracker:
-  # scan_parameters:
-  #   interval: 512ms
-  #   window: 48ms
+  scan_parameters:
+    interval: 512ms
+    window: 48ms
 # text_sensor:
 #   - platform: ble_scanner
 #     name: "scan"
@@ -49,13 +50,13 @@ sensor:
   - platform: ble_rssi
     mac_address: ED:7D:5E:3F:12:F7
     name: "BLE Mi Charly"
-# mqtt:
-#   broker: !secret mqtt_broker
-#   discovery_prefix: !secret mqtt_prefijo
-#   #   username: !secret mqtt_username
-#   #   password: !secret mqtt_password
-#   on_message:
-#     - topic: $device_name/button/restart
-#       payload: "RESTART"
-#       then:
-#         - button.press: restart_button
+mqtt:
+  broker: !secret mqtt_broker
+  discovery_prefix: !secret mqtt_prefijo
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  on_message:
+    - topic: $device_name/button/restart
+      payload: "RESTART"
+      then:
+        - button.press: restart_button
